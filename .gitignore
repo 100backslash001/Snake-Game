@@ -1,0 +1,5 @@
+*.o
+.ColorSnake
+ColorSnake
+*.wav
+*.ttf
