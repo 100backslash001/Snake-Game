@@ -2,6 +2,7 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string>
 
 // Global variables
@@ -41,7 +42,9 @@ SDL_Texture* text_texture = NULL;
 TTF_Font* font = NULL;
 
 // Variables for sounds
-Mix_Chunk* move_sound = NULL;
+Mix_Music* main_theme = NULL;
+Mix_Chunk* fruit_caught_sound = NULL;
+Mix_Chunk* fail_sound = NULL;
 
 void renderText( SDL_Renderer* renderer, std::string text, int x, int y, int w, int h );
 
@@ -97,9 +100,18 @@ bool init()
                 }
                 else
                 {
-                    move_sound = Mix_LoadWAV( "./moving.wav" );
+                    main_theme = Mix_LoadMUS( "./bg_theme.wav" );
 
-                    if ( move_sound == NULL )
+		    if ( main_theme == NULL )
+		    {
+		    	printf( "Unable to load music! SDL_mixer Error: %s\n", Mix_GetError() );
+			success = false;
+		    }
+
+                    fruit_caught_sound = Mix_LoadWAV( "./fruit_caught.wav" );
+		    fail_sound = Mix_LoadWAV( "./fail_sound.wav" );
+
+                    if ( fruit_caught_sound == NULL || fail_sound == NULL )
                     {
                         printf( "Unable to load sound %s! SDL_mixer Error: %s\n", "./moving.wav", Mix_GetError() );
                         success = false;
@@ -187,25 +199,25 @@ void update()
         switch ( dir )
         {
             case UP:
-                Mix_PlayChannel( -1, move_sound, 0 );
                 head.y -= 20;
                 break;
             case DOWN:
-                    Mix_PlayChannel( -1, move_sound, 0 );
-                    head.y += 20;
-                    break;
+                head.y += 20;
+                break;
             case LEFT:
-                    Mix_PlayChannel( -1, move_sound, 0 );
-                    head.x -= 20;
-                    break;
-            case RIGHT:
-                    Mix_PlayChannel( -1, move_sound, 0 );
-                    head.x += 20;
-                    break;
+		head.x -= 20;
+    		break;
+    	    case RIGHT:
+		head.x += 20;
+		break;
             default:
-                    Mix_HaltMusic();
-                    break;
+		break;
         }
+
+	if ( Mix_PlayingMusic() == 0 )
+	{
+		Mix_PlayMusic( main_theme, 1 );
+	}
 
         for ( int i = 0; i < tail_length; i++ )
         {
@@ -228,6 +240,7 @@ void update()
              && head.x <= fruit.x + fruit.w
         )
         {
+	    Mix_PlayChannel( -1, fruit_caught_sound, 0 );
             score++;
             fruit.x = std::rand() % width;
             fruit.y = std::rand() % height;
@@ -237,7 +250,15 @@ void update()
         // If snake goes over board
         if ( head.x < 0 || head.x + head.w > width || head.y < 0 || head.y + head.h > height )
         {
+	    Mix_PauseMusic();
+
+	    Mix_PlayChannel( -1, fail_sound, 0 );
+
+	    sleep( 1 );
+
             game_over = true;
+
+	    Mix_HaltMusic();
         }
 
         // If snake eat itself
@@ -281,7 +302,15 @@ void update()
 
                 SDL_SetRenderDrawColor( mainRenderer, tail_color.r, tail_color.g, tail_color.b, tail_color.a );
 
+		Mix_PauseMusic();
+
+		Mix_PlayChannel( -1, fail_sound, 0 );
+
+		sleep( 1 );
+
                 game_over = true;
+
+		Mix_HaltMusic();
             }
             else
             {
@@ -304,8 +333,13 @@ void update()
 
 void close()
 {
-    Mix_FreeChunk( move_sound );
-    move_sound = NULL;
+    Mix_FreeChunk( fruit_caught_sound );
+    Mix_FreeChunk( fail_sound );
+    fruit_caught_sound = NULL;
+    fail_sound = NULL;
+
+    Mix_FreeMusic( main_theme );
+    main_theme = NULL;
 
     SDL_DestroyTexture( text_texture );
     TTF_CloseFont( font );
