@@ -14,7 +14,7 @@ int tail_length;
 
 // Initialization main functuions
 bool init();
-void update();
+void run();
 void close();
 
 // Main variables for window, renderer, snake's head, fruit
@@ -50,78 +50,66 @@ void renderText( SDL_Renderer* renderer, std::string text, int x, int y, int w, 
 
 bool init()
 {
-    bool success = true;
-
     if ( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_AUDIO ) < 0 )
     {
         printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
-        success = false;
+        return false;
     }
-    else
+
+    mainWindow = SDL_CreateWindow( "ColorSnake", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN );
+
+    if ( mainWindow == NULL )
     {
-        mainWindow = SDL_CreateWindow( "ColorSnake", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN );
-
-        if ( mainWindow == NULL )
-        {
-            printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
-            success = false;
-        }
-        else
-        {
-            mainRenderer = SDL_CreateRenderer( mainWindow, -1, SDL_RENDERER_ACCELERATED );
-
-            if ( mainRenderer == NULL )
-            {
-                printf( "Renderer could not be created! SDL_Error: %s\n", SDL_GetError() );
-                success = false;
-            }
-            else
-            {
-                if ( TTF_Init() == -1 )
-                {
-                    printf( "SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError() );
-                    success = false;
-                }
-                else
-                {
-                    font = TTF_OpenFont( "./pixel_font.ttf", 14 );
-
-                    if ( font == NULL )
-                    {
-                        printf( "Could not open font! TTF_Error: %s\n", TTF_GetError() );
-                        success = false;
-                    }
-                }
-
-                if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
-                {
-                    printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
-                    success = false;
-                }
-                else
-                {
-                    main_theme = Mix_LoadMUS( "./bg_theme.wav" );
-
-		    if ( main_theme == NULL )
-		    {
-		    	printf( "Unable to load music! SDL_mixer Error: %s\n", Mix_GetError() );
-			success = false;
-		    }
-
-                    fruit_caught_sound = Mix_LoadWAV( "./fruit_caught.wav" );
-		    fail_sound = Mix_LoadWAV( "./fail_sound.wav" );
-
-                    if ( fruit_caught_sound == NULL || fail_sound == NULL )
-                    {
-                        printf( "Unable to load sound %s! SDL_mixer Error: %s\n", "./moving.wav", Mix_GetError() );
-                        success = false;
-                    }
-                }
-            }
-        }
+        printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
+        return false;
     }
 
-    return success;
+    mainRenderer = SDL_CreateRenderer( mainWindow, -1, SDL_RENDERER_ACCELERATED );
+
+    if ( mainRenderer == NULL )
+    {
+        printf( "Renderer could not be created! SDL_Error: %s\n", SDL_GetError() );
+        return false;
+    }
+
+    if ( TTF_Init() == -1 )
+    {
+        printf( "SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError() );
+        return false;
+    }
+
+    font = TTF_OpenFont( "./pixel_font.ttf", 14 );
+
+    if ( font == NULL )
+    {
+        printf( "Could not open font! TTF_Error: %s\n", TTF_GetError() );
+        return false;
+    }
+
+    if ( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
+    {
+        printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+        return false;
+    }
+
+    main_theme = Mix_LoadMUS( "./bg_theme.wav" );
+
+    if ( main_theme == NULL )
+    {
+        printf( "Unable to load music! SDL_mixer Error: %s\n", Mix_GetError() );
+        return false;
+    }
+
+    fruit_caught_sound = Mix_LoadWAV( "./fruit_caught.wav" );
+    fail_sound = Mix_LoadWAV( "./fail_sound.wav" );
+
+    if ( fruit_caught_sound == NULL || fail_sound == NULL )
+    {
+        printf( "Unable to load sound %s! SDL_mixer Error: %s\n", "./moving.wav", Mix_GetError() );
+        return false;
+    }
+
+    return true;
 }
 
 // Function that renders text
@@ -144,7 +132,7 @@ void renderText( SDL_Renderer* renderer, std::string text, int x, int y, int w, 
 }
 
 // Function that contains main loop and render's methods
-void update()
+void run()
 {
     bool game_over = false;
 
@@ -176,24 +164,24 @@ void update()
         // Here is a logic down below
         switch ( dir )
         {
-        case UP:
-            prev.x = std::floor( head.x );
-            prev.y = head.y;
-            break;
-        case DOWN:
-            prev.x = std::floor( head.x );
-            prev.y = head.y;
-            break;
-        case LEFT:
-            prev.x = head.x;
-            prev.y = std::floor( head.y );
-            break;
-        case RIGHT:
-            prev.x = head.x;
-            prev.y = std::floor( head.y );
-            break;
-        default:
-            break;
+            case UP:
+                prev.x = std::floor( head.x );
+                prev.y = head.y;
+                break;
+            case DOWN:
+                prev.x = std::floor( head.x );
+                prev.y = head.y;
+                break;
+            case LEFT:
+                prev.x = head.x;
+                prev.y = std::floor( head.y );
+                break;
+            case RIGHT:
+                prev.x = head.x;
+                prev.y = std::floor( head.y );
+                break;
+            default:
+                break;
         }
 
         switch ( dir )
@@ -205,13 +193,13 @@ void update()
                 head.y += 20;
                 break;
             case LEFT:
-		head.x -= 20;
-    		break;
-    	    case RIGHT:
-		head.x += 20;
-		break;
+                head.x -= 20;
+                break;
+            case RIGHT:
+                head.x += 20;
+                break;
             default:
-		break;
+                break;
         }
 
 	if ( Mix_PlayingMusic() == 0 )
@@ -364,7 +352,7 @@ int main( int argc, char* args[] )
     }
     else
     {
-        update();
+        run();
     }
 
     close();
