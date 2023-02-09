@@ -204,7 +204,7 @@ void run()
 
 	if ( Mix_PlayingMusic() == 0 )
 	{
-		Mix_PlayMusic( main_theme, 1 );
+	    Mix_PlayMusic( main_theme, 1 );
 	}
 
         for ( int i = 0; i < tail_length; i++ )
